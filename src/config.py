@@ -49,10 +49,10 @@ def validate_config():
     if not OPENAI_API_KEY:
         errors.append("OPENAI_API_KEY is required")
 
-    # Database URL check (for Vercel Postgres)
-    db_url = os.getenv('POSTGRES_URL') or os.getenv('DATABASE_URL')
+    # Database URL check (supports Supabase, Vercel Postgres, or any Postgres)
+    db_url = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL') or os.getenv('SUPABASE_DB_URL')
     if not db_url:
-        errors.append("POSTGRES_URL or DATABASE_URL is required for database connection")
+        errors.append("DATABASE_URL is required for database connection (get it from Supabase or other Postgres provider)")
 
     if errors:
         raise ValueError("Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))

@@ -2,20 +2,21 @@
 
 Transform your GitHub projects into engaging Reddit posts automatically using AI.
 
-## 🚀 Quick Deploy to Vercel
+## 🚀 Quick Deploy (FREE!)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/postagent)
+### 🆓 Deploy with Free Supabase Database (Recommended)
 
-### One-Click Deployment
+**See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for complete FREE deployment guide!**
 
-1. Click the "Deploy with Vercel" button above
-2. Connect your GitHub account
-3. Add these environment variables:
-   - `OPENAI_API_KEY` - Your OpenAI API key
-   - `GITHUB_TOKEN` - Your GitHub personal access token
-   - `SECRET_KEY` - Random secret key for Flask sessions
-4. Click "Deploy"
-5. Done! Your app is live 🎉
+Takes 10 minutes:
+1. Create free Supabase database
+2. Add environment variables to Vercel
+3. Deploy automatically from GitHub
+4. Done! 🎉
+
+### 💳 Alternative: Vercel Postgres
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for Vercel Postgres setup (may require verification)
 
 ## 📋 Prerequisites
 
@@ -29,15 +30,19 @@ Create a `.env` file or set these in Vercel:
 ```env
 # Required
 OPENAI_API_KEY=sk-...
-GITHUB_TOKEN=ghp_...
-SECRET_KEY=your-random-secret-key
+DATABASE_URL=postgresql://user:password@host:5432/database
 
 # Optional
+GITHUB_TOKEN=ghp_...
 REDDIT_CLIENT_ID=your-reddit-client-id
 REDDIT_CLIENT_SECRET=your-reddit-client-secret
 REDDIT_USER_AGENT=PostAgent/1.0
-CSV_FILE_PATH=./Content Organiser - Sheet1.csv
 ```
+
+**Where to get DATABASE_URL:**
+- Supabase: See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) (FREE)
+- Vercel Postgres: Auto-set as `POSTGRES_URL`
+- Local: `postgresql://postgres:password@localhost:5432/postagent`
 
 ## 🎯 Features
 
@@ -63,9 +68,15 @@ pip install -r requirements.txt
 
 # 4. Create .env file
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your API keys and database URL
 
-# 5. Run the app
+# 5. Set up database (if needed)
+python init_db.py
+
+# 6. Test database connection
+python test_db.py
+
+# 7. Run the app
 python app.py
 ```
 
@@ -76,8 +87,11 @@ Visit http://localhost:5000
 ```
 postagent/
 ├── app.py                 # Main Flask application
+├── api/
+│   └── index.py          # Vercel serverless entry point
 ├── src/                   # Core functionality
 │   ├── config.py         # Configuration management
+│   ├── database.py       # Database models and operations
 │   ├── github_analyzer.py # GitHub API integration
 │   ├── subreddit_matcher.py # Subreddit matching logic
 │   └── content_generator.py # Post generation
@@ -85,7 +99,11 @@ postagent/
 ├── static/              # Static assets
 ├── data/                # Data storage
 │   └── subreddit_db.json # Subreddit database
+├── init_db.py           # Database initialization script
+├── test_db.py           # Database connection test
 ├── vercel.json          # Vercel configuration
+├── SUPABASE_SETUP.md    # Free deployment guide
+├── DEPLOYMENT.md        # Vercel Postgres guide
 └── requirements.txt     # Python dependencies
 ```
 

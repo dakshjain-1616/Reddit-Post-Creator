@@ -2,10 +2,17 @@
 
 This guide will help you deploy PostAgent to Vercel with Postgres database support.
 
+## 🆓 Looking for FREE deployment?
+
+**→ See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for 100% free deployment with Supabase!**
+
+This guide covers Vercel Postgres (has free tier but may require verification).
+
 ## Prerequisites
 
 - A Vercel account
 - Your GitHub repository connected to Vercel
+- A Postgres database (Vercel Postgres, Supabase, or any Postgres provider)
 
 ## Step 1: Set up Vercel Postgres
 

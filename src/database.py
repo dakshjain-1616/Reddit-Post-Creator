@@ -47,9 +47,14 @@ class GeneratedPost(Base):
 
 # Database connection
 def get_database_url():
-    """Get database URL from environment (Vercel Postgres)"""
-    # Vercel Postgres automatically sets POSTGRES_URL
-    return os.getenv('POSTGRES_URL') or os.getenv('DATABASE_URL')
+    """Get database URL from environment (supports Supabase, Vercel Postgres, or any Postgres)"""
+    # Try multiple environment variable names
+    # Supabase uses DATABASE_URL, Vercel uses POSTGRES_URL
+    return (
+        os.getenv('DATABASE_URL') or
+        os.getenv('POSTGRES_URL') or
+        os.getenv('SUPABASE_DB_URL')
+    )
 
 
 def init_db():
