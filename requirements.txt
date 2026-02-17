@@ -1,0 +1,30 @@
+# Web Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# AI/ML
+openai>=1.12.0
+
+# Data Processing
+pandas>=2.2.0
+
+# HTTP & API
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.1.0
+
+# Reddit API (optional)
+praw>=7.7.1
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Markdown Processing
+markdown>=3.5.0
+
+# CLI (optional)
+rich>=13.7.0
+click>=8.1.7
+
+# Production Server
+gunicorn>=21.2.0

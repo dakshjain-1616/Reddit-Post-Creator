@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - PostAgent{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex justify-between items-start">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">Your GitHub Projects</h2>
+            <p class="mt-2 text-gray-600">Turn your GitHub projects into engaging Reddit posts in 3 easy steps</p>
+        </div>
+        <button onclick="showHelpGuide()" class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            How It Works
+        </button>
+    </div>
+</div>
+
+<!-- Quick Guide -->
+<div class="mb-8 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-6 border border-indigo-100">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+            <div>
+                <h3 class="font-semibold text-gray-900">Add Your Project</h3>
+                <p class="text-sm text-gray-600 mt-1">Click "Add Project" and paste your GitHub URL</p>
+            </div>
+        </div>
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+            <div>
+                <h3 class="font-semibold text-gray-900">Analyze</h3>
+                <p class="text-sm text-gray-600 mt-1">AI analyzes your project and finds best subreddits</p>
+            </div>
+        </div>
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+            <div>
+                <h3 class="font-semibold text-gray-900">Generate Posts</h3>
+                <p class="text-sm text-gray-600 mt-1">Get custom-written posts ready to share on Reddit</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if projects %}
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        #
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Project Title
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        GitHub URL
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for project in projects %}
+                <tr id="project-{{ project.index }}" class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ project.index }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ project['Content Title'] }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">
+                            <a href="{{ project['Github Repo'] }}" target="_blank"
+                               class="text-indigo-600 hover:text-indigo-900 underline">
+                                {{ project['Github Repo'] }}
+                            </a>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end gap-2">
+                            <button onclick="analyzeProject({{ project.index }})"
+                                    class="inline-flex items-center px-3 py-2 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                                    title="AI will analyze your project and find the best subreddits to post in">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                </svg>
+                                Analyze
+                            </button>
+                            <button onclick="generatePosts({{ project.index }})"
+                                    class="inline-flex items-center px-3 py-2 border border-green-300 rounded-md text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
+                                    title="Generate ready-to-post content for Reddit communities">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Create Posts
+                            </button>
+                            <button onclick="deleteProject({{ project.index }})"
+                                    class="inline-flex items-center px-3 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                                    title="Remove this project from your list">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-center py-12 bg-white rounded-lg shadow">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No projects</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by adding a new GitHub repository.</p>
+        <div class="mt-6">
+            <a href="{{ url_for('add_project') }}"
+               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                Add Project
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                    <h3 class="mt-4 text-lg font-medium text-gray-900" id="loadingText">Processing...</h3>
+                    <p class="mt-2 text-sm text-gray-500">This may take a moment.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Guide Modal -->
+<div id="helpModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeHelp()"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-3xl w-full">
+            <div class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-white">📚 How to Use PostAgent</h3>
+                    <button onclick="closeHelp()" class="text-white hover:text-gray-200">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="px-6 py-6 space-y-6">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-900 mb-2">✨ What does this tool do?</h4>
+                    <p class="text-blue-800">PostAgent helps you promote your GitHub projects on Reddit by automatically creating engaging posts tailored to different Reddit communities (subreddits).</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">1</div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 mb-1">Add Your GitHub Project</h4>
+                            <p class="text-gray-600 text-sm">Click the "Add Project" button in the navigation menu. Paste your GitHub repository URL (like https://github.com/username/project-name).</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">2</div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 mb-1">Analyze Your Project</h4>
+                            <p class="text-gray-600 text-sm mb-2">Click the blue "Analyze" button next to your project. This will:</p>
+                            <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
+                                <li>Read your project's README file</li>
+                                <li>Understand what your project does</li>
+                                <li>Find the best Reddit communities to share it in</li>
+                                <li>Calculate how well it matches each community</li>
+                            </ul>
+                            <p class="text-gray-600 text-sm mt-2">⏱️ Takes about 10-15 seconds</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-lg">3</div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 mb-1">Generate Reddit Posts</h4>
+                            <p class="text-gray-600 text-sm mb-2">Click the green "Create Posts" button. The AI will write custom posts for each subreddit that:</p>
+                            <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
+                                <li>Match the community's style and rules</li>
+                                <li>Highlight your project's best features</li>
+                                <li>Use the right tone and formatting</li>
+                                <li>Include relevant technical details</li>
+                            </ul>
+                            <p class="text-gray-600 text-sm mt-2">⏱️ Takes about 20-30 seconds per post</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center font-bold text-lg">✓</div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 mb-1">View & Use Your Posts</h4>
+                            <p class="text-gray-600 text-sm">Click "Generated Posts" in the navigation to see all your ready-to-use posts. Simply copy and paste them to Reddit!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-yellow-900 mb-2">💡 Tips for Best Results</h4>
+                    <ul class="text-sm text-yellow-800 space-y-1">
+                        <li>• Make sure your GitHub README is complete and well-written</li>
+                        <li>• Review and customize the generated posts before posting</li>
+                        <li>• Follow each subreddit's rules before posting</li>
+                        <li>• Engage with comments after posting to build community</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                <button onclick="closeHelp()" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                    Got It!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Results Modal -->
+<div id="resultsModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeResults()"></div>
+        <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-4xl w-full max-h-screen">
+            <div class="bg-white px-6 pt-5 pb-4">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-2xl font-bold text-gray-900">Analysis Results</h3>
+                    <button onclick="closeResults()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="resultsContent" class="overflow-y-auto max-h-[70vh] space-y-6">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="closeResults()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showLoading(text) {
+    document.getElementById('loadingText').textContent = text;
+    document.getElementById('loadingModal').classList.remove('hidden');
+}
+
+function hideLoading() {
+    document.getElementById('loadingModal').classList.add('hidden');
+}
+
+function showResults() {
+    document.getElementById('resultsModal').classList.remove('hidden');
+}
+
+function closeResults() {
+    document.getElementById('resultsModal').classList.add('hidden');
+}
+
+function showHelpGuide() {
+    document.getElementById('helpModal').classList.remove('hidden');
+}
+
+function closeHelp() {
+    document.getElementById('helpModal').classList.add('hidden');
+}
+
+function displayAnalysisResults(data) {
+    const resultsContent = document.getElementById('resultsContent');
+
+    const analysis = (data.analysis && data.analysis.analysis) ? data.analysis.analysis : {};
+    const valuePropositions = Array.isArray(analysis.top_3_values) ? analysis.top_3_values : [];
+    const keyFeatures = Array.isArray(analysis.key_features) ? analysis.key_features : [];
+    const useCases = Array.isArray(analysis.use_cases) ? analysis.use_cases : [];
+    const techStack = Array.isArray(analysis.technical_stack) ? analysis.technical_stack : [];
+    const subreddits = Array.isArray(data.subreddit_matches) ? data.subreddit_matches : [];
+
+    let html = '';
+
+    // Project Info
+    if (data.analysis) {
+        html += '<div class="bg-gray-50 rounded-lg p-4">';
+        html += '<h4 class="font-semibold text-gray-900 mb-2">Repository</h4>';
+        html += '<p class="text-gray-700"><strong>' + (data.analysis.name || 'Unknown') + '</strong></p>';
+        if (data.analysis.description) {
+            html += '<p class="text-gray-600 text-sm mt-1">' + data.analysis.description + '</p>';
+        }
+        html += '<p class="text-gray-500 text-sm mt-2">⭐ ' + (data.analysis.stars || 0) + ' stars | 🍴 ' + (data.analysis.forks || 0) + ' forks</p>';
+        html += '</div>';
+    }
+
+    // Synopsis
+    if (analysis.synopsis) {
+        html += '<div>';
+        html += '<h4 class="font-semibold text-gray-900 mb-2">Synopsis</h4>';
+        html += '<p class="text-gray-700">' + analysis.synopsis + '</p>';
+        html += '</div>';
+    }
+
+    // Value Propositions
+    if (valuePropositions.length > 0) {
+        html += '<div>';
+        html += '<h4 class="font-semibold text-gray-900 mb-2">Top 3 Value Propositions</h4>';
+        html += '<ul class="list-disc list-inside space-y-1 text-gray-700">';
+        for (let i = 0; i < valuePropositions.length; i++) {
+            html += '<li>' + valuePropositions[i] + '</li>';
+        }
+        html += '</ul>';
+        html += '</div>';
+    }
+
+    // Key Features
+    if (keyFeatures.length > 0) {
+        html += '<div>';
+        html += '<h4 class="font-semibold text-gray-900 mb-2">Key Features</h4>';
+        html += '<ul class="list-disc list-inside space-y-1 text-gray-700">';
+        for (let i = 0; i < keyFeatures.length; i++) {
+            html += '<li>' + keyFeatures[i] + '</li>';
+        }
+        html += '</ul>';
+        html += '</div>';
+    }
+
+    // Use Cases
+    if (useCases.length > 0) {
+        html += '<div>';
+        html += '<h4 class="font-semibold text-gray-900 mb-2">Use Cases</h4>';
+        html += '<ul class="list-disc list-inside space-y-1 text-gray-700">';
+        for (let i = 0; i < useCases.length; i++) {
+            html += '<li>' + useCases[i] + '</li>';
+        }
+        html += '</ul>';
+        html += '</div>';
+    }
+
+    // Technical Stack
+    if (techStack.length > 0) {
+        html += '<div>';
+        html += '<h4 class="font-semibold text-gray-900 mb-2">Technical Stack</h4>';
+        html += '<div class="flex flex-wrap gap-2">';
+        for (let i = 0; i < techStack.length; i++) {
+            html += '<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">' + techStack[i] + '</span>';
+        }
+        html += '</div>';
+        html += '</div>';
+    }
+
+    // Target Audience
+    if (analysis.target_audience) {
+        html += '<div>';
+        html += '<h4 class="font-semibold text-gray-900 mb-2">Target Audience</h4>';
+        html += '<p class="text-gray-700">' + analysis.target_audience + '</p>';
+        html += '</div>';
+    }
+
+    // Matched Subreddits
+    if (subreddits.length > 0) {
+        html += '<div>';
+        html += '<h4 class="font-semibold text-gray-900 mb-3">Top Matched Subreddits</h4>';
+        html += '<div class="space-y-2">';
+        const maxSubreddits = Math.min(5, subreddits.length);
+        for (let i = 0; i < maxSubreddits; i++) {
+            const m = subreddits[i];
+            const name = m && m.name ? m.name : 'Unknown';
+            const score = (m && m.score != null) ? m.score.toFixed(2) : 'N/A';
+            const description = m && m.info && m.info.description ? m.info.description : '';
+
+            html += '<div class="border border-gray-200 rounded-lg p-3 hover:border-indigo-300 transition">';
+            html += '<div class="flex justify-between items-start">';
+            html += '<div class="flex-1">';
+            html += '<p class="font-medium text-indigo-600">' + name + '</p>';
+            if (description) {
+                html += '<p class="text-sm text-gray-600 mt-1">' + description + '</p>';
+            }
+            html += '</div>';
+            html += '<span class="ml-3 px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-medium">' + score + '</span>';
+            html += '</div>';
+            html += '</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+    }
+
+    resultsContent.innerHTML = html;
+    showResults();
+}
+
+async function analyzeProject(rowId) {
+    showLoading('Analyzing repository...');
+
+    try {
+        const response = await fetch(`/analyze/${rowId}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        hideLoading();
+
+        if (data.success) {
+            // Log structure for debugging
+            console.log('Analysis structure:', {
+                hasAnalysis: !!data.analysis,
+                analysisKeys: data.analysis ? Object.keys(data.analysis) : [],
+                hasNestedAnalysis: data.analysis && data.analysis.analysis,
+                nestedKeys: data.analysis && data.analysis.analysis ? Object.keys(data.analysis.analysis) : []
+            });
+
+            // Safely extract nested data
+            const analysis = (data.analysis && data.analysis.analysis) ? data.analysis.analysis : {};
+            console.log('Extracted analysis:', analysis);
+            console.log('top_3_values:', analysis.top_3_values);
+
+            const valuePropositions = Array.isArray(analysis.top_3_values) ? analysis.top_3_values : [];
+            console.log('valuePropositions:', valuePropositions, 'isArray:', Array.isArray(valuePropositions));
+
+            const subreddits = Array.isArray(data.subreddit_matches) ? data.subreddit_matches : [];
+            console.log('subreddits:', subreddits, 'isArray:', Array.isArray(subreddits));
+
+            let valueText = 'No value propositions found';
+            try {
+                if (valuePropositions && valuePropositions.length > 0) {
+                    valueText = '';
+                    for (let i = 0; i < valuePropositions.length; i++) {
+                        if (i > 0) valueText += '\n';
+                        valueText += valuePropositions[i];
+                    }
+                }
+            } catch (e) {
+                console.error('Error joining valuePropositions:', e);
+                valueText = 'Error formatting value propositions';
+            }
+
+            let subredditText = 'No subreddit matches found';
+            try {
+                if (subreddits && subreddits.length > 0) {
+                    subredditText = '';
+                    const maxSubreddits = Math.min(5, subreddits.length);
+                    for (let i = 0; i < maxSubreddits; i++) {
+                        if (i > 0) subredditText += '\n';
+                        const m = subreddits[i];
+                        const name = m && m.name ? m.name : 'Unknown';
+                        const score = (m && m.score != null) ? m.score.toFixed(2) : 'N/A';
+                        subredditText += '- ' + name + ' (' + score + ')';
+                    }
+                }
+            } catch (e) {
+                console.error('Error formatting subreddits:', e);
+                subredditText = 'Error formatting subreddits';
+            }
+
+            displayAnalysisResults(data);
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        hideLoading();
+        alert('Error analyzing project: ' + error.message);
+        console.error('Full error:', error);
+    }
+}
+
+async function generatePosts(rowId) {
+    const message = '🤖 Ready to Create Reddit Posts?\n\n' +
+                    'The AI will:\n' +
+                    '• Analyze your project\n' +
+                    '• Find the best subreddits\n' +
+                    '• Write custom posts for each community\n\n' +
+                    '⏱️ This takes about 30-60 seconds\n' +
+                    '💰 Uses OpenAI API credits\n\n' +
+                    'Continue?';
+
+    if (!confirm(message)) {
+        return;
+    }
+
+    showLoading('Creating your Reddit posts... This may take up to a minute.');
+
+    try {
+        const response = await fetch(`/generate/${rowId}`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        hideLoading();
+
+        if (data.success) {
+            const posts = Array.isArray(data.posts) ? data.posts : [];
+
+            let message = '🎉 Success! Created ' + posts.length + ' Reddit posts!\n\n';
+            message += 'Posts are ready for:\n';
+
+            if (posts.length > 0) {
+                for (let i = 0; i < posts.length; i++) {
+                    const subreddit = posts[i] && posts[i].subreddit ? posts[i].subreddit : 'Unknown';
+                    message += '✓ ' + subreddit + '\n';
+                }
+            }
+
+            message += '\nClick OK to view your posts!';
+            alert(message);
+            window.location.href = '/posts/' + data.project_slug;
+        } else {
+            alert('❌ Error: ' + (data.error || 'Unknown error') + '\n\nPlease try again or contact support if the issue persists.');
+        }
+    } catch (error) {
+        hideLoading();
+        alert('❌ Error generating posts: ' + error.message + '\n\nPlease check your internet connection and try again.');
+    }
+}
+
+async function deleteProject(rowId) {
+    const message = '🗑️ Delete this project?\n\n' +
+                    'This will remove it from your list.\n' +
+                    'Generated posts will NOT be deleted.\n\n' +
+                    'Are you sure?';
+
+    if (!confirm(message)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/delete/${rowId}`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById(`project-${rowId}`).remove();
+            alert('✓ Project removed successfully!');
+        } else {
+            alert('❌ Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('❌ Error deleting project: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

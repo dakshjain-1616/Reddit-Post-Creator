@@ -1,0 +1,183 @@
+{
+  "r/MachineLearning": {
+    "name": "r/MachineLearning",
+    "description": "Academic and research-focused ML community",
+    "avg_engagement": "high",
+    "posting_rules": [
+      "Must be ML-related research or projects",
+      "No pure self-promotion",
+      "Technical depth expected",
+      "Use appropriate flair"
+    ],
+    "preferred_flairs": ["Project", "Research", "Discussion"],
+    "tone": "technical, academic, detailed",
+    "audience_level": "advanced",
+    "topics": ["research", "papers", "novel_techniques", "state_of_art"],
+    "keywords": ["training", "model", "architecture", "optimization", "research"]
+  },
+  "r/artificial": {
+    "name": "r/artificial",
+    "description": "General AI discussions and news",
+    "avg_engagement": "high",
+    "posting_rules": [
+      "AI-related content",
+      "Constructive discussions",
+      "No low-effort posts"
+    ],
+    "preferred_flairs": ["News", "Discussion", "Project"],
+    "tone": "informative, accessible, engaging",
+    "audience_level": "intermediate",
+    "topics": ["ai_news", "general_ai", "ethics", "applications"],
+    "keywords": ["ai", "artificial intelligence", "automation", "future"]
+  },
+  "r/LocalLLaMA": {
+    "name": "r/LocalLLaMA",
+    "description": "Local LLM deployment and open-source models",
+    "avg_engagement": "very_high",
+    "posting_rules": [
+      "Focus on local/open-source LLMs",
+      "Technical discussions welcome",
+      "Share benchmarks and comparisons"
+    ],
+    "preferred_flairs": ["Discussion", "Tutorial", "News"],
+    "tone": "technical, practical, community-driven",
+    "audience_level": "intermediate_to_advanced",
+    "topics": ["local_deployment", "open_source", "llm_tools", "optimization"],
+    "keywords": ["llm", "local", "open-source", "quantization", "inference"]
+  },
+  "r/OpenAI": {
+    "name": "r/OpenAI",
+    "description": "OpenAI products and GPT discussions",
+    "avg_engagement": "high",
+    "posting_rules": [
+      "OpenAI-related content",
+      "Share use cases",
+      "No spam"
+    ],
+    "preferred_flairs": ["ChatGPT", "API", "GPT-4"],
+    "tone": "enthusiastic, practical, use-case focused",
+    "audience_level": "beginner_to_intermediate",
+    "topics": ["chatgpt", "gpt4", "api_usage", "applications"],
+    "keywords": ["gpt", "chatgpt", "openai", "api", "prompts"]
+  },
+  "r/learnmachinelearning": {
+    "name": "r/learnmachinelearning",
+    "description": "ML learning and educational content",
+    "avg_engagement": "medium",
+    "posting_rules": [
+      "Educational content",
+      "Helpful for learners",
+      "Include explanations"
+    ],
+    "preferred_flairs": ["Project", "Tutorial", "Discussion"],
+    "tone": "educational, encouraging, beginner-friendly",
+    "audience_level": "beginner_to_intermediate",
+    "topics": ["tutorials", "learning_resources", "beginner_projects", "explanations"],
+    "keywords": ["learn", "tutorial", "beginner", "guide", "how-to"]
+  },
+  "r/datascience": {
+    "name": "r/datascience",
+    "description": "Data science practice and discussion",
+    "avg_engagement": "high",
+    "posting_rules": [
+      "Data science related",
+      "Professional discussions",
+      "Share insights and tools"
+    ],
+    "preferred_flairs": ["Project", "Discussion", "Analysis"],
+    "tone": "professional, analytical, practical",
+    "audience_level": "intermediate_to_advanced",
+    "topics": ["data_analysis", "ml_in_production", "tools", "best_practices"],
+    "keywords": ["data", "analysis", "pipeline", "production", "business"]
+  },
+  "r/deeplearning": {
+    "name": "r/deeplearning",
+    "description": "Deep learning techniques and research",
+    "avg_engagement": "medium",
+    "posting_rules": [
+      "Deep learning specific",
+      "Technical content",
+      "Research and implementation"
+    ],
+    "preferred_flairs": ["Research", "Project", "Discussion"],
+    "tone": "technical, research-oriented, detailed",
+    "audience_level": "advanced",
+    "topics": ["neural_networks", "architectures", "training", "research"],
+    "keywords": ["neural", "network", "deep", "training", "architecture"]
+  },
+  "r/computervision": {
+    "name": "r/computervision",
+    "description": "Computer vision and image processing",
+    "avg_engagement": "medium",
+    "posting_rules": [
+      "CV-related content",
+      "Technical discussions",
+      "Share implementations"
+    ],
+    "preferred_flairs": ["Project", "Research", "Discussion"],
+    "tone": "technical, specialized, implementation-focused",
+    "audience_level": "intermediate_to_advanced",
+    "topics": ["image_processing", "object_detection", "ocr", "segmentation"],
+    "keywords": ["vision", "image", "detection", "ocr", "visual"]
+  },
+  "r/MLOps": {
+    "name": "r/MLOps",
+    "description": "ML operations and production systems",
+    "avg_engagement": "medium",
+    "posting_rules": [
+      "MLOps and production ML",
+      "Best practices",
+      "Tools and infrastructure"
+    ],
+    "preferred_flairs": ["Discussion", "Tools", "Best Practices"],
+    "tone": "professional, practical, operations-focused",
+    "audience_level": "intermediate_to_advanced",
+    "topics": ["deployment", "monitoring", "infrastructure", "production"],
+    "keywords": ["deployment", "production", "monitoring", "infrastructure", "ops"]
+  },
+  "r/LangChain": {
+    "name": "r/LangChain",
+    "description": "LangChain framework and LLM applications",
+    "avg_engagement": "medium",
+    "posting_rules": [
+      "LangChain-related",
+      "Share implementations",
+      "Help and discussions"
+    ],
+    "preferred_flairs": ["Project", "Help", "Discussion"],
+    "tone": "practical, implementation-focused, helpful",
+    "audience_level": "intermediate",
+    "topics": ["llm_applications", "rag", "agents", "chains"],
+    "keywords": ["langchain", "rag", "agent", "chain", "llm"]
+  },
+  "r/ChatGPT": {
+    "name": "r/ChatGPT",
+    "description": "ChatGPT use cases and discussions",
+    "avg_engagement": "very_high",
+    "posting_rules": [
+      "ChatGPT related",
+      "Share interesting use cases",
+      "No spam"
+    ],
+    "preferred_flairs": ["Use cases", "Discussion", "Tips"],
+    "tone": "casual, enthusiastic, practical",
+    "audience_level": "beginner",
+    "topics": ["use_cases", "prompts", "applications", "tips"],
+    "keywords": ["chatgpt", "prompt", "use case", "tips", "gpt"]
+  },
+  "r/ArtificialIntelligence": {
+    "name": "r/ArtificialIntelligence",
+    "description": "Broad AI community",
+    "avg_engagement": "high",
+    "posting_rules": [
+      "AI-related content",
+      "Quality discussions",
+      "No low-effort posts"
+    ],
+    "preferred_flairs": ["News", "Discussion", "Project"],
+    "tone": "informative, broad appeal, engaging",
+    "audience_level": "beginner_to_intermediate",
+    "topics": ["ai_general", "news", "ethics", "future"],
+    "keywords": ["ai", "intelligence", "automation", "technology"]
+  }
+}

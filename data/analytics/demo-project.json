@@ -1,0 +1,56 @@
+{
+  "project_name": "demo-project",
+  "posts": [
+    {
+      "post_id": "comments",
+      "reddit_url": "https://reddit.com/r/MachineLearning/comments/abc123/test",
+      "subreddit": "r/MachineLearning",
+      "title": "Manual Entry",
+      "upvotes": 247,
+      "upvote_ratio": 0.945,
+      "num_comments": 18,
+      "awards": 2,
+      "created_utc": 1771327164.699704,
+      "tracked_at": "2026-02-17T11:19:24.699708",
+      "hours_since_post": 0,
+      "snapshots": [
+        {
+          "post_id": "comments",
+          "reddit_url": "https://reddit.com/r/MachineLearning/comments/abc123/test",
+          "subreddit": "r/MachineLearning",
+          "title": "Manual Entry",
+          "upvotes": 247,
+          "upvote_ratio": 0.945,
+          "num_comments": 18,
+          "awards": 2,
+          "created_utc": 1771327164.699704,
+          "tracked_at": "2026-02-17T11:19:24.699708",
+          "hours_since_post": 0
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_posts": 1,
+    "total_upvotes": 247,
+    "total_comments": 18,
+    "total_awards": 2,
+    "avg_upvotes_per_post": 247.0,
+    "avg_comments_per_post": 18.0,
+    "avg_upvote_ratio": 0.945,
+    "best_post": {
+      "subreddit": "r/MachineLearning",
+      "upvotes": 247,
+      "comments": 18,
+      "url": "https://reddit.com/r/MachineLearning/comments/abc123/test"
+    },
+    "subreddit_breakdown": {
+      "r/MachineLearning": {
+        "count": 1,
+        "total_upvotes": 247,
+        "total_comments": 18
+      }
+    }
+  },
+  "last_updated": "2026-02-17T11:19:24.699786"
+}
