@@ -28,3 +28,10 @@ click>=8.1.7
 
 # Production Server
 gunicorn>=21.2.0
+
+# Database (Vercel Postgres)
+psycopg2-binary>=2.9.9
+sqlalchemy>=2.0.25
+
+# Vercel Storage
+vercel-blob>=0.1.0

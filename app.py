@@ -4,15 +4,20 @@ Lightweight Flask frontend for managing GitHub repositories and generating Reddi
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-import pandas as pd
 import json
 import os
 from pathlib import Path
 from datetime import datetime
-from src.config import CSV_FILE_PATH, GENERATED_POSTS_DIR, validate_config
+from src.config import validate_config
 from src.github_analyzer import GitHubAnalyzer
 from src.subreddit_matcher import SubredditMatcher
 from src.content_generator import ContentGenerator
+from src.database import (
+    get_all_projects, get_project_by_id, add_project as db_add_project,
+    delete_project as db_delete_project, project_exists,
+    save_generated_posts as db_save_posts, get_all_generated_posts,
+    get_project_posts, get_projects_count, get_generated_posts_count
+)
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
@@ -33,58 +38,19 @@ except Exception as e:
     generator = None
 
 
-def load_projects():
-    """Load projects from CSV"""
-    try:
-        df = pd.read_csv(CSV_FILE_PATH)
-        # Ensure required columns exist
-        if 'Content Title' not in df.columns or 'Github Repo' not in df.columns:
-            return pd.DataFrame(columns=['Content Title', 'Github Repo', 's3 link/drive Link',
-                                        'Youtube Link', 'Blog created on docs', 'README updated'])
-        return df
-    except FileNotFoundError:
-        return pd.DataFrame(columns=['Content Title', 'Github Repo', 's3 link/drive Link',
-                                    'Youtube Link', 'Blog created on docs', 'README updated'])
-
-
-def save_projects(df):
-    """Save projects to CSV"""
-    df.to_csv(CSV_FILE_PATH, index=False)
-
-
-def get_generated_posts():
-    """Get all generated posts with metadata"""
-    posts = []
-    if GENERATED_POSTS_DIR.exists():
-        for project_dir in GENERATED_POSTS_DIR.iterdir():
-            if project_dir.is_dir():
-                metadata_file = project_dir / "metadata.json"
-                if metadata_file.exists():
-                    with open(metadata_file, 'r') as f:
-                        metadata = json.load(f)
-
-                    # Count post files
-                    post_files = list(project_dir.glob("r-*.md"))
-                    metadata['post_count'] = len(post_files)
-                    metadata['project_name'] = project_dir.name
-                    posts.append(metadata)
-
-    # Sort by generation time (newest first)
-    posts.sort(key=lambda x: x.get('generated_at', ''), reverse=True)
-    return posts
+# Database-backed functions (no more CSV/filesystem)
+# All data is now stored in Vercel Postgres
 
 
 @app.route('/')
 def index():
     """Home page - list all projects"""
-    df = load_projects()
-    projects = df.to_dict('records')
-
-    # Add index for each project
-    for idx, project in enumerate(projects):
-        project['index'] = idx + 1
-
-    return render_template('index.html', projects=projects)
+    try:
+        projects = get_all_projects()
+        return render_template('index.html', projects=projects)
+    except Exception as e:
+        flash(f'Error loading projects: {str(e)}', 'error')
+        return render_template('index.html', projects=[])
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -103,29 +69,19 @@ def add_project():
             parts = github_url.rstrip('/').split('/')
             title = parts[-1] if parts else 'Untitled Project'
 
-        # Load existing projects
-        df = load_projects()
-
         # Check if URL already exists
-        if github_url in df['Github Repo'].values:
-            flash('This GitHub repository is already in the list', 'warning')
+        try:
+            if project_exists(github_url):
+                flash('This GitHub repository is already in the list', 'warning')
+                return redirect(url_for('index'))
+
+            # Add new project to database
+            db_add_project(title, github_url)
+            flash(f'Successfully added: {title}', 'success')
             return redirect(url_for('index'))
-
-        # Add new project
-        new_row = {
-            'Content Title': title,
-            'Github Repo': github_url,
-            's3 link/drive Link': '',
-            'Youtube Link': '',
-            'Blog created on docs': '',
-            'README updated': ''
-        }
-
-        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        save_projects(df)
-
-        flash(f'Successfully added: {title}', 'success')
-        return redirect(url_for('index'))
+        except Exception as e:
+            flash(f'Error adding project: {str(e)}', 'error')
+            return redirect(url_for('add_project'))
 
     return render_template('add_project.html')
 
@@ -133,15 +89,14 @@ def add_project():
 @app.route('/analyze/<int:row_id>')
 def analyze_project(row_id):
     """Analyze a specific project"""
-    df = load_projects()
-
-    if row_id < 1 or row_id > len(df):
-        return jsonify({'error': 'Invalid project ID'}), 404
-
-    project = df.iloc[row_id - 1]
-    github_url = project['Github Repo']
-
     try:
+        project = get_project_by_id(row_id)
+
+        if not project:
+            return jsonify({'error': 'Invalid project ID'}), 404
+
+        github_url = project['Github Repo']
+
         # Analyze repository
         analysis = analyzer.analyze_repository(github_url)
 
@@ -168,16 +123,15 @@ def analyze_project(row_id):
 @app.route('/generate/<int:row_id>', methods=['POST'])
 def generate_posts(row_id):
     """Generate Reddit posts for a project"""
-    df = load_projects()
-
-    if row_id < 1 or row_id > len(df):
-        return jsonify({'error': 'Invalid project ID'}), 404
-
-    project = df.iloc[row_id - 1]
-    github_url = project['Github Repo']
-    project_title = project['Content Title']
-
     try:
+        project = get_project_by_id(row_id)
+
+        if not project:
+            return jsonify({'error': 'Invalid project ID'}), 404
+
+        github_url = project['Github Repo']
+        project_title = project['Content Title']
+
         # Analyze repository
         analysis = analyzer.analyze_repository(github_url)
 
@@ -186,44 +140,32 @@ def generate_posts(row_id):
 
         # Generate posts
         project_slug = project_title.lower().replace(' ', '-').replace('/', '-')
-        project_dir = GENERATED_POSTS_DIR / project_slug
-        project_dir.mkdir(parents=True, exist_ok=True)
 
-        # Save metadata
+        # Prepare metadata
         metadata = {
-            'project_title': project_title,
-            'github_url': github_url,
-            'generated_at': datetime.now().isoformat(),
             'analysis': analysis,
             'subreddit_matches': [name for name, _, _ in matches]
         }
-
-        with open(project_dir / 'metadata.json', 'w') as f:
-            json.dump(metadata, f, indent=2)
 
         # Generate posts for each subreddit
         posts_generated = []
         for subreddit_name, score, subreddit_info in matches[:5]:  # Top 5 subreddits
             post = generator.generate_post(analysis, subreddit_name, subreddit_info)
 
-            # Save post with project name in filename
             subreddit_clean = subreddit_name.lower().replace('r/', '').replace('/', '-')
             post_filename = f"{project_slug}-{subreddit_clean}.md"
-            post_path = project_dir / post_filename
-
-            with open(post_path, 'w') as f:
-                f.write(f"# {post['title']}\n\n")
-                f.write(f"**Subreddit:** {subreddit_name}\n")
-                f.write(f"**Suggested Flair:** {post.get('flair', 'N/A')}\n")
-                f.write(f"**Engagement Estimate:** {post.get('estimated_engagement', 'N/A')}\n\n")
-                f.write("---\n\n")
-                f.write(post.get('body', ''))
 
             posts_generated.append({
                 'subreddit': subreddit_name,
                 'filename': post_filename,
-                'title': post['title']
+                'title': post['title'],
+                'body': post.get('body', ''),
+                'flair': post.get('flair', 'N/A'),
+                'estimated_engagement': post.get('estimated_engagement', 'N/A')
             })
+
+        # Save all posts to database
+        db_save_posts(project_slug, project_title, github_url, posts_generated, metadata)
 
         flash(f'Successfully generated {len(posts_generated)} posts for {project_title}', 'success')
         return jsonify({
@@ -242,59 +184,63 @@ def generate_posts(row_id):
 @app.route('/posts')
 def view_posts():
     """View all generated posts"""
-    posts = get_generated_posts()
-    return render_template('posts.html', posts=posts)
+    try:
+        posts = get_all_generated_posts()
+        return render_template('posts.html', posts=posts)
+    except Exception as e:
+        flash(f'Error loading posts: {str(e)}', 'error')
+        return render_template('posts.html', posts=[])
 
 
 @app.route('/posts/<project_slug>')
 def view_project_posts(project_slug):
     """View posts for a specific project"""
-    project_dir = GENERATED_POSTS_DIR / project_slug
+    try:
+        project_data = get_project_posts(project_slug)
 
-    if not project_dir.exists():
-        flash('Project not found', 'error')
+        if not project_data:
+            flash('Project not found', 'error')
+            return redirect(url_for('view_posts'))
+
+        # Format posts for display
+        posts = []
+        for post in project_data['posts']:
+            # Recreate markdown format for display
+            content = f"# {post['title']}\n\n"
+            content += f"**Subreddit:** {post['subreddit']}\n"
+            content += f"**Suggested Flair:** {post.get('flair', 'N/A')}\n"
+            content += f"**Engagement Estimate:** {post.get('estimated_engagement', 'N/A')}\n\n"
+            content += "---\n\n"
+            content += post['body']
+
+            posts.append({
+                'filename': post['filename'],
+                'subreddit': post['subreddit'],
+                'content': content
+            })
+
+        return render_template('project_posts.html',
+                              project_slug=project_slug,
+                              metadata=project_data['metadata'],
+                              posts=posts)
+    except Exception as e:
+        flash(f'Error loading project posts: {str(e)}', 'error')
         return redirect(url_for('view_posts'))
-
-    # Load metadata
-    metadata_file = project_dir / 'metadata.json'
-    if metadata_file.exists():
-        with open(metadata_file, 'r') as f:
-            metadata = json.load(f)
-    else:
-        metadata = {}
-
-    # Load all posts
-    posts = []
-    for post_file in project_dir.glob('r-*.md'):
-        with open(post_file, 'r') as f:
-            content = f.read()
-
-        posts.append({
-            'filename': post_file.name,
-            'subreddit': post_file.stem,
-            'content': content
-        })
-
-    return render_template('project_posts.html',
-                          project_slug=project_slug,
-                          metadata=metadata,
-                          posts=posts)
 
 
 @app.route('/delete/<int:row_id>', methods=['POST'])
 def delete_project(row_id):
     """Delete a project from the list"""
-    df = load_projects()
+    try:
+        project_title = db_delete_project(row_id)
 
-    if row_id < 1 or row_id > len(df):
-        return jsonify({'error': 'Invalid project ID'}), 404
+        if not project_title:
+            return jsonify({'error': 'Invalid project ID'}), 404
 
-    project_title = df.iloc[row_id - 1]['Content Title']
-    df = df.drop(row_id - 1).reset_index(drop=True)
-    save_projects(df)
-
-    flash(f'Successfully deleted: {project_title}', 'success')
-    return jsonify({'success': True})
+        flash(f'Successfully deleted: {project_title}', 'success')
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/health')
@@ -304,8 +250,8 @@ def health():
         validate_config()
         return jsonify({
             'status': 'healthy',
-            'projects_count': len(load_projects()),
-            'generated_posts_count': len(get_generated_posts())
+            'projects_count': get_projects_count(),
+            'generated_posts_count': get_generated_posts_count()
         })
     except Exception as e:
         return jsonify({

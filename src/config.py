@@ -49,8 +49,10 @@ def validate_config():
     if not OPENAI_API_KEY:
         errors.append("OPENAI_API_KEY is required")
 
-    if not Path(CSV_FILE_PATH).exists():
-        errors.append(f"CSV file not found at {CSV_FILE_PATH}")
+    # Database URL check (for Vercel Postgres)
+    db_url = os.getenv('POSTGRES_URL') or os.getenv('DATABASE_URL')
+    if not db_url:
+        errors.append("POSTGRES_URL or DATABASE_URL is required for database connection")
 
     if errors:
         raise ValueError("Configuration errors:\n" + "\n".join(f"  - {e}" for e in errors))
