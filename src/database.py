@@ -41,7 +41,7 @@ class GeneratedPost(Base):
     body = Column(Text, nullable=False)
     flair = Column(String(200))
     estimated_engagement = Column(String(200))
-    metadata = Column(JSON)  # Store analysis and subreddit info
+    post_metadata = Column(JSON)  # Store analysis and subreddit info (renamed from 'metadata' to avoid SQLAlchemy conflict)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -256,7 +256,7 @@ def get_all_generated_posts() -> List[Dict]:
                 'github_url': post.github_url,
                 'generated_at': post.created_at.isoformat(),
                 'post_count': post_count,
-                'subreddit_matches': post.metadata.get('subreddit_matches', []) if post.metadata else []
+                'subreddit_matches': post.post_metadata.get('subreddit_matches', []) if post.post_metadata else []
             })
 
         # Sort by generation time (newest first)
@@ -278,7 +278,7 @@ def get_project_posts(project_slug: str) -> Dict:
             return None
 
         # Get metadata from first post
-        metadata = posts[0].metadata or {}
+        metadata = posts[0].post_metadata or {}
 
         post_list = []
         for post in posts:

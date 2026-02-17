@@ -68,7 +68,7 @@ CREATE TABLE generated_posts (
     body TEXT NOT NULL,
     flair VARCHAR(200),
     estimated_engagement VARCHAR(200),
-    metadata JSON,
+    post_metadata JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -202,3 +202,6 @@ After deployment:
 ---
 
 **Ready to deploy?** Follow the steps above - takes less than 10 minutes! 🚀
+
+
+postgresql://postgres:[Dakshjain@heyneo]@db.nxgfjukhxxcmljcqxdct.supabase.co:5432/postgres

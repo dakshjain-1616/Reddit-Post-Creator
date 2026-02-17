@@ -92,7 +92,7 @@ CREATE TABLE generated_posts (
     body TEXT NOT NULL,
     flair VARCHAR(200),
     estimated_engagement VARCHAR(200),
-    metadata JSON,
+    post_metadata JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
