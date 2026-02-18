@@ -44,7 +44,7 @@ class ContentGenerator:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert Reddit content creator specializing in AI/ML community engagement. You create authentic, engaging posts that provide value and spark discussion while following community guidelines."
+                        "content": "You are a developer sharing your own project on Reddit. Write like a real person — short, casual, no hype. No bullet points, no bold headers, no marketing speak. Just a developer talking to other developers."
                     },
                     {
                         "role": "user",
@@ -81,110 +81,33 @@ class ContentGenerator:
         """Build prompt for content generation"""
 
         analysis = project_analysis.get("analysis", {})
+        github_url = project_analysis.get('url') or ''
+        description = analysis.get('synopsis') or project_analysis.get('description') or ''
+        stack = ', '.join(analysis.get('technical_stack') or [])
 
-        prompt = f"""You are creating a Reddit post for {subreddit_name}.
+        prompt = f"""Write a Reddit post for {subreddit_name} sharing this project.
 
-## PROJECT INFORMATION
+Project: {project_analysis.get('name') or ''}
+GitHub: {github_url}
+What it does: {description}
+Stack: {stack}
 
-**Repository:** {project_analysis.get('name') or ''}
-**Description:** {project_analysis.get('description') or ''}
-**GitHub URL:** {project_analysis.get('url') or ''}
+Rules:
+- Title: short, starts with "Built a..." or "I built a..." or similar natural opener. No hype.
+- Body: 2-3 sentences MAX. Plain prose, no bullet points, no headers, no bold text.
+  Explain what it does in plain developer language. End with the GitHub link.
+- Sound like a developer casually sharing something they made, not a product launch.
+- No phrases like "excited to share", "game-changer", "powerful", "robust", "seamlessly", "leverage".
+- Flair: pick the most appropriate from {', '.join(subreddit_info.get('preferred_flairs') or ['Project'])}
 
-**Top 3 Value Propositions:**
-{self._format_list(analysis.get('top_3_values') or [])}
-
-**Technical Synopsis:**
-{analysis.get('synopsis') or ''}
-
-**Key Features:**
-{self._format_list(analysis.get('key_features') or [])}
-
-**How to Build Further with NEO:**
-{analysis.get('build_further_with_neo') or ''}
-
-**Use Cases:**
-{self._format_list(analysis.get('use_cases') or [])}
-
-**Technical Stack:**
-{', '.join(analysis.get('technical_stack') or [])}
-
-**Innovation:**
-{analysis.get('innovation_level') or ''}
-
-## SUBREDDIT CONTEXT
-
-**Community:** {subreddit_info.get('description') or ''}
-**Tone:** {subreddit_info.get('tone') or ''}
-**Audience Level:** {(subreddit_info.get('audience_level') or '').replace('_', ' ').title()}
-
-**Posting Rules:**
-{self._format_list(subreddit_info.get('posting_rules') or [])}
-
-**Preferred Flairs:** {', '.join(subreddit_info.get('preferred_flairs') or [])}
-"""
-
-        if viral_examples:
-            prompt += f"""
-
-## VIRAL POST EXAMPLES FROM THIS SUBREDDIT
-
-Study these successful posts to understand what resonates with this community:
-
-{viral_examples[:4000]}  # Limit to avoid token limits
-"""
-
-        prompt += """
-
-## INSTRUCTIONS
-
-Generate a Reddit post that:
-
-1. **Title Requirements:**
-   - Under 300 characters
-   - Engaging and attention-grabbing
-   - Follows patterns from viral examples
-   - Avoid clickbait; be authentic and descriptive
-   - Consider using: questions, announcements, or "I built..." format
-
-2. **Body Requirements:**
-   - 300-500 words
-   - Use markdown formatting
-   - Structure: Hook → Context → Value Props → Technical Details → Demo/Usage → Call to Action
-   - Emphasize the top 3 value propositions naturally
-   - Explain NEO's role without being overly promotional
-   - Include technical depth appropriate for audience level
-   - Add relevant links (GitHub, demos if available)
-   - Be authentic and conversational, not salesy
-   - Match the subreddit's tone and culture
-
-3. **Engagement Strategy:**
-   - Ask questions to encourage discussion
-   - Invite feedback and contributions
-   - Share specific use cases
-   - Be humble and open about limitations
-   - Provide clear next steps for interested readers
-
-4. **Compliance:**
-   - Follow all subreddit rules
-   - No spam or excessive self-promotion
-   - Provide genuine value to the community
-   - Use appropriate flair
-
-## OUTPUT FORMAT
-
-Return a JSON object with:
-
-```json
-{
-  "title": "Your engaging title here",
-  "body": "Full post body in markdown format",
-  "flair": "Suggested flair from preferred list",
-  "estimated_engagement": "high/medium/low with brief reasoning",
-  "rationale": "1-2 sentences explaining your approach for this specific subreddit"
-}
-```
-
-Make the post authentic, valuable, and engaging. This is a real project built with NEO that deserves community attention."""
+Return JSON:
+{{
+  "title": "...",
+  "body": "...",
+  "flair": "...",
+  "estimated_engagement": "high/medium/low",
+  "rationale": "one sentence"
+}}"""
 
         return prompt
 
