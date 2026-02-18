@@ -91,13 +91,18 @@ Project: {project_analysis.get('name') or ''}
 GitHub: {github_url}
 What it does: {description}
 Stack: {stack}
+Use cases / value: {', '.join(analysis.get('use_cases') or [])}
+
+Structure the body in exactly this order, all in plain prose (no bullet points, no headers, no bold):
+1. One sentence: what I built.
+2. One or two sentences: what it does / how it works.
+3. One sentence: what you can use it for or what value it gives you.
+4. The GitHub link on its own line.
 
 Rules:
-- Title: short, starts with "Built a..." or "I built a..." or similar natural opener. No hype.
-- Body: 2-3 sentences MAX. Plain prose, no bullet points, no headers, no bold text.
-  Explain what it does in plain developer language. End with the GitHub link.
-- Sound like a developer casually sharing something they made, not a product launch.
-- No phrases like "excited to share", "game-changer", "powerful", "robust", "seamlessly", "leverage".
+- Title: natural opener like "Built a..." or "I made a...". Short, no hype.
+- Body: 4-5 sentences total, plain conversational English, developer tone.
+- No phrases like "excited to share", "game-changer", "powerful", "robust", "seamlessly", "leverage", "thrilled".
 - Flair: pick the most appropriate from {', '.join(subreddit_info.get('preferred_flairs') or ['Project'])}
 
 Return JSON:
