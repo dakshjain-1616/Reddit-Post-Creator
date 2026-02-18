@@ -20,13 +20,10 @@ def test_connection():
     db_url = os.getenv('POSTGRES_URL') or os.getenv('DATABASE_URL')
 
     if not db_url:
-        print("❌ POSTGRES_URL not set!")
-        print("\n   For local testing:")
-        print("   1. Create .env file (or use existing)")
-        print("   2. Add: POSTGRES_URL=your_database_url")
-        print("\n   For Vercel:")
-        print("   1. Create Vercel Postgres database")
-        print("   2. It auto-adds POSTGRES_URL")
+        print("❌ DATABASE_URL not set!")
+        print("\n   1. Go to https://console.neon.tech and create a free project")
+        print("   2. Copy the connection string from the dashboard")
+        print("   3. Add to .env: DATABASE_URL=postgresql://...")
         return False
 
     print("✅ Database URL found")
@@ -37,7 +34,13 @@ def test_connection():
         from sqlalchemy import create_engine, text
 
         print("🔌 Attempting connection...")
-        engine = create_engine(db_url)
+        # Fix postgres:// -> postgresql:// for SQLAlchemy
+        if db_url.startswith('postgres://'):
+            db_url = db_url.replace('postgres://', 'postgresql://', 1)
+        from sqlalchemy.pool import NullPool
+        is_local = 'localhost' in db_url or '127.0.0.1' in db_url
+        connect_args = {} if is_local else {"sslmode": "require"}
+        engine = create_engine(db_url, poolclass=NullPool, connect_args=connect_args)
 
         with engine.connect() as conn:
             result = conn.execute(text("SELECT version()"))

@@ -1,12 +1,13 @@
 """
 Database module for PostAgent
-Handles all database operations using Vercel Postgres
+Handles all database operations using Neon Postgres
 """
 
 import os
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 from datetime import datetime
 from typing import List, Dict, Optional
 
@@ -28,6 +29,16 @@ class Project(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class RepoAnalysisCache(Base):
+    """Cache for GitHub repo analysis results — avoids re-fetching GitHub + re-calling OpenAI"""
+    __tablename__ = 'repo_analysis_cache'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    github_url = Column(String(500), nullable=False, unique=True, index=True)
+    analysis_data = Column(JSON, nullable=False)
+    analyzed_at = Column(DateTime, default=datetime.utcnow)
+
+
 class GeneratedPost(Base):
     """Generated posts model - replaces filesystem storage"""
     __tablename__ = 'generated_posts'
@@ -47,14 +58,16 @@ class GeneratedPost(Base):
 
 # Database connection
 def get_database_url():
-    """Get database URL from environment (supports Supabase, Vercel Postgres, or any Postgres)"""
-    # Try multiple environment variable names
-    # Supabase uses DATABASE_URL, Vercel uses POSTGRES_URL
-    return (
+    """Get database URL from environment (supports Neon, Supabase, Vercel Postgres, or any Postgres)"""
+    url = (
         os.getenv('DATABASE_URL') or
         os.getenv('POSTGRES_URL') or
         os.getenv('SUPABASE_DB_URL')
     )
+    if url and url.startswith('postgres://'):
+        # SQLAlchemy requires postgresql:// not postgres://
+        url = url.replace('postgres://', 'postgresql://', 1)
+    return url
 
 
 def init_db():
@@ -62,10 +75,21 @@ def init_db():
     db_url = get_database_url()
 
     if not db_url:
-        raise ValueError("Database URL not configured. Set POSTGRES_URL or DATABASE_URL environment variable.")
+        raise ValueError(
+            "Database URL not configured. Set DATABASE_URL environment variable.\n"
+            "Get your Neon connection string from: https://console.neon.tech"
+        )
 
-    # Create engine
-    engine = create_engine(db_url)
+    # Use SSL for remote hosts (Neon, Supabase); skip for localhost
+    is_local = 'localhost' in db_url or '127.0.0.1' in db_url
+    connect_args = {} if is_local else {"sslmode": "require"}
+
+    # NullPool is required for serverless environments (Vercel, Neon auto-suspend)
+    engine = create_engine(
+        db_url,
+        poolclass=NullPool,
+        connect_args=connect_args,
+    )
 
     # Create tables
     Base.metadata.create_all(engine)
@@ -211,7 +235,7 @@ def save_generated_posts(project_slug: str, project_title: str, github_url: str,
                 body=post_data.get('body', ''),
                 flair=post_data.get('flair', ''),
                 estimated_engagement=post_data.get('estimated_engagement', ''),
-                metadata=metadata
+                post_metadata=metadata
             )
             session.add(post)
             saved_count += 1
@@ -317,5 +341,44 @@ def get_generated_posts_count() -> int:
     try:
         from sqlalchemy import func
         return session.query(func.count(func.distinct(GeneratedPost.project_slug))).scalar()
+    finally:
+        close_session(session)
+
+
+# Analysis Cache
+def get_cached_analysis(github_url: str) -> Optional[Dict]:
+    """Return cached analysis for a repo, or None if not cached"""
+    session = get_session()
+    try:
+        row = session.query(RepoAnalysisCache).filter_by(github_url=github_url).first()
+        return row.analysis_data if row else None
+    finally:
+        close_session(session)
+
+
+def save_analysis_cache(github_url: str, analysis_data: Dict) -> None:
+    """Upsert analysis result into cache"""
+    session = get_session()
+    try:
+        row = session.query(RepoAnalysisCache).filter_by(github_url=github_url).first()
+        if row:
+            row.analysis_data = analysis_data
+            row.analyzed_at = datetime.utcnow()
+        else:
+            session.add(RepoAnalysisCache(github_url=github_url, analysis_data=analysis_data))
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        close_session(session)
+
+
+def delete_analysis_cache(github_url: str) -> None:
+    """Force re-analysis on next request by clearing cache for a repo"""
+    session = get_session()
+    try:
+        session.query(RepoAnalysisCache).filter_by(github_url=github_url).delete()
+        session.commit()
     finally:
         close_session(session)

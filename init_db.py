@@ -74,14 +74,12 @@ def main():
     print("="*60 + "\n")
 
     # Check for database URL
-    db_url = os.getenv('POSTGRES_URL') or os.getenv('DATABASE_URL')
+    db_url = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL')
     if not db_url:
         print("❌ Database URL not configured!")
-        print("\n   Set one of these environment variables:")
-        print("   - POSTGRES_URL (for Vercel Postgres)")
-        print("   - DATABASE_URL (for other Postgres databases)")
-        print("\n   Example:")
-        print("   export POSTGRES_URL='postgres://user:pass@host/db'")
+        print("\n   1. Go to https://console.neon.tech and create a free project")
+        print("   2. Copy the connection string from the dashboard")
+        print("   3. Add to .env: DATABASE_URL=postgresql://...")
         sys.exit(1)
 
     print(f"✅ Database URL configured")

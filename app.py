@@ -16,7 +16,8 @@ from src.database import (
     get_all_projects, get_project_by_id, add_project as db_add_project,
     delete_project as db_delete_project, project_exists,
     save_generated_posts as db_save_posts, get_all_generated_posts,
-    get_project_posts, get_projects_count, get_generated_posts_count
+    get_project_posts, get_projects_count, get_generated_posts_count,
+    delete_analysis_cache
 )
 
 app = Flask(__name__)
@@ -96,9 +97,10 @@ def analyze_project(row_id):
             return jsonify({'error': 'Invalid project ID'}), 404
 
         github_url = project['Github Repo']
+        force_refresh = request.args.get('refresh') == '1'
 
-        # Analyze repository
-        analysis = analyzer.analyze_repository(github_url)
+        # Analyze repository (uses cache unless force_refresh)
+        analysis = analyzer.analyze_repository(github_url, force_refresh=force_refresh)
 
         # Match subreddits
         matches = matcher.match_subreddits(analysis)
@@ -131,9 +133,10 @@ def generate_posts(row_id):
 
         github_url = project['Github Repo']
         project_title = project['Content Title']
+        force_refresh = request.json.get('refresh', False) if request.is_json else request.form.get('refresh') == '1'
 
-        # Analyze repository
-        analysis = analyzer.analyze_repository(github_url)
+        # Analyze repository (uses cache unless force_refresh)
+        analysis = analyzer.analyze_repository(github_url, force_refresh=force_refresh)
 
         # Match subreddits
         matches = matcher.match_subreddits(analysis)

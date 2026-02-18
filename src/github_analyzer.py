@@ -199,12 +199,23 @@ Focus on:
 
 Ensure all fields are filled with meaningful, specific content based on the README."""
 
-    def analyze_repository(self, repo_url: str) -> Dict:
-        """Complete workflow: fetch data and analyze"""
+    def analyze_repository(self, repo_url: str, force_refresh: bool = False) -> Dict:
+        """Complete workflow: fetch data and analyze. Uses DB cache to skip repeat work."""
+        from .database import get_cached_analysis, save_analysis_cache
+
+        if not force_refresh:
+            cached = get_cached_analysis(repo_url)
+            if cached:
+                print(f"Using cached analysis for {repo_url}")
+                return cached
+
         print(f"Fetching data from {repo_url}...")
         repo_data = self.fetch_repo_data(repo_url)
 
         print("Analyzing with OpenAI GPT-4...")
         analysis = self.analyze_with_llm(repo_data)
+
+        save_analysis_cache(repo_url, analysis)
+        print("Analysis cached.")
 
         return analysis
