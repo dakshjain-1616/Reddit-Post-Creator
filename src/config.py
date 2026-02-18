@@ -16,7 +16,7 @@ REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "PostAgent/1.0")
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
-CSV_FILE_PATH = os.getenv("CSV_FILE_PATH", str(PROJECT_ROOT / "Content Organiser - Sheet1.csv"))
+CSV_FILE_PATH = os.getenv("CSV_FILE_PATH", str(PROJECT_ROOT / "Content Organiser - Sheet(1).csv"))
 DATA_DIR = PROJECT_ROOT / "data"
 VIRAL_EXAMPLES_DIR = DATA_DIR / "viral_examples"
 GENERATED_POSTS_DIR = DATA_DIR / "generated_posts"
