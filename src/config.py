@@ -27,9 +27,19 @@ SUBREDDIT_DB_PATH = DATA_DIR / "subreddit_db.json"
 VIRAL_EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
 GENERATED_POSTS_DIR.mkdir(parents=True, exist_ok=True)
 
-# LLM Configuration (via OpenRouter)
+# LLM Configuration
+# Uses OpenRouter if OPENROUTER_API_KEY is set, otherwise falls back to OpenAI directly
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-OPENAI_MODEL = "minimax/minimax-m2.5"
+
+if OPENROUTER_API_KEY:
+    LLM_API_KEY = OPENROUTER_API_KEY
+    LLM_BASE_URL = OPENROUTER_BASE_URL
+    OPENAI_MODEL = "minimax/minimax-m2.5"
+else:
+    LLM_API_KEY = OPENAI_API_KEY
+    LLM_BASE_URL = None  # OpenAI default
+    OPENAI_MODEL = "gpt-4o-mini"
+
 OPENAI_TEMPERATURE = 0.7
 OPENAI_MAX_TOKENS = 2000
 

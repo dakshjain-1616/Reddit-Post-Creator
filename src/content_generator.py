@@ -5,15 +5,14 @@ from typing import Dict, Optional
 from datetime import datetime
 from openai import OpenAI
 
-from .config import OPENAI_API_KEY, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, OPENAI_MODEL, OPENAI_TEMPERATURE
+from .config import LLM_API_KEY, LLM_BASE_URL, OPENAI_MODEL, OPENAI_TEMPERATURE
 from .reddit_scraper import RedditScraper
 from .utils import rate_limit
 
 class ContentGenerator:
     def __init__(self):
         """Initialize content generator"""
-        api_key = OPENROUTER_API_KEY or OPENAI_API_KEY
-        self.client = OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+        self.client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
         self.reddit_scraper = RedditScraper()
 
     @rate_limit(1)
