@@ -5,14 +5,15 @@ from typing import Dict, Optional
 from datetime import datetime
 from openai import OpenAI
 
-from .config import OPENAI_API_KEY, OPENAI_MODEL, OPENAI_TEMPERATURE
+from .config import OPENAI_API_KEY, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, OPENAI_MODEL, OPENAI_TEMPERATURE
 from .reddit_scraper import RedditScraper
 from .utils import rate_limit
 
 class ContentGenerator:
     def __init__(self):
         """Initialize content generator"""
-        self.client = OpenAI(api_key=OPENAI_API_KEY)
+        api_key = OPENROUTER_API_KEY or OPENAI_API_KEY
+        self.client = OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
         self.reddit_scraper = RedditScraper()
 
     @rate_limit(1)
@@ -44,7 +45,16 @@ class ContentGenerator:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a developer sharing your own project on Reddit. Write like a real person — short, casual, no hype. No bullet points, no bold headers, no marketing speak. Just a developer talking to other developers."
+                        "content": (
+                            "You are a developer sharing a project you built on Reddit. "
+                            "Write exactly like someone who ran into a real problem, built something to fix it, and is now sharing it with other developers. "
+                            "Be specific about the pain — describe what was frustrating or broken before you built the tool. "
+                            "Then explain what the tool does and list its concrete capabilities as bullet points. "
+                            "Use plain English. No hype, no marketing fluff, no vague adjectives. "
+                            "Avoid: 'excited to share', 'game-changer', 'powerful', 'robust', 'seamlessly', 'leverage', 'thrilled', 'innovative'. "
+                            "Bullet points are encouraged when listing features or use cases — they help readers scan quickly. "
+                            "Do not pad or summarize. Do not repeat yourself."
+                        )
                     },
                     {
                         "role": "user",
@@ -52,6 +62,7 @@ class ContentGenerator:
                     }
                 ],
                 temperature=OPENAI_TEMPERATURE,
+                max_tokens=1200,
                 response_format={"type": "json_object"}
             )
 
@@ -85,26 +96,80 @@ class ContentGenerator:
         description = analysis.get('synopsis') or project_analysis.get('description') or ''
         stack = ', '.join(analysis.get('technical_stack') or [])
 
+        features = analysis.get('key_features') or []
+        use_cases = analysis.get('use_cases') or []
+        pain_point = analysis.get('pain_point') or ''
+        what_makes_it_different = analysis.get('what_makes_it_different') or ''
+
         prompt = f"""Write a Reddit post for {subreddit_name} sharing this project.
 
-Project: {project_analysis.get('name') or ''}
+--- PROJECT INFO ---
+Name: {project_analysis.get('name') or ''}
 GitHub: {github_url}
 What it does: {description}
+The pain it solves: {pain_point}
+Key features (use as-is in bullets): {', '.join(features)}
+Use cases: {', '.join(use_cases)}
+What makes it different: {what_makes_it_different}
 Stack: {stack}
-Use cases / value: {', '.join(analysis.get('use_cases') or [])}
 
-Structure the body in this order:
-1. One sentence: what I built.
-2. One or two sentences: what it does / how it works.
-3. One sentence: what you can use it for or what value it gives you.
-4. Optionally, 1-2 bullet points if there are specific features worth calling out — only add them if they genuinely add clarity, skip otherwise.
-5. The GitHub link on its own line.
+--- STYLE REFERENCE ---
+Here is an example of the exact tone and structure to aim for:
 
-Rules:
-- Title: natural opener like "Built a..." or "I made a...". Short, no hype.
-- Body: plain conversational English, developer tone. Bullets are optional, not required.
-- No phrases like "excited to share", "game-changer", "powerful", "robust", "seamlessly", "leverage", "thrilled".
-- Flair: pick the most appropriate from {', '.join(subreddit_info.get('preferred_flairs') or ['Project'])}
+"Working with embeddings (RAG, semantic search, clustering, recommendations, etc.), means:
+
+Generate embeddings
+Compute cosine similarity
+Run retrieval
+Hope it "works"
+
+But I stumbled upon the issue of not being able to determine why my RAG responses felt off, retrieval quality being inconsistent and clustering results looked weird.
+
+Debugging embeddings was painful.
+
+To solve this issue, we built this Embedding evaluation CLI tool to audit embedding spaces, not just generate them.
+
+Instead of guessing whether your vectors make sense, it:
+
+- Detects semantic outliers
+- Identifies cluster inconsistencies
+- Flags global embedding collapse
+- Highlights ambiguous boundary tokens
+- Generates heatmaps and cluster visualizations
+- Produces structured reports (JSON / Markdown)
+
+Checkout the tool and feel free to share your feedback:
+https://github.com/example/tool
+
+This is especially useful for:
+- RAG pipelines
+- Vector DB systems
+- Semantic search products
+- Embedding model comparisons
+- Fine-tuning experiments
+
+It surfaces structural problems in the geometry of your embeddings before they break your system downstream."
+
+--- WHAT MAKES THAT EXAMPLE WORK ---
+- Opens with the normal workflow in that domain, written as short fragments — shows you understand the space
+- Then hits the real frustration honestly ("felt off", "looked weird") — not a polished problem statement
+- One short blunt sentence as its own line after describing the pain
+- "To solve this, we built..." — simple pivot, no fanfare
+- "Instead of guessing whether..." — frames the cognitive problem, not just the technical one
+- Feature bullet points are action verbs: Detects, Identifies, Flags, Highlights, Generates, Produces
+- Link line is plain, feedback invite is casual
+- Use cases listed plainly under "This is especially useful for:"
+- Closing line is a specific technical insight, not a summary
+
+--- RULES ---
+- Adapt the structure to the project — don't copy the example literally. The opening should reflect THIS project's domain and workflow.
+- Vary sentence rhythm. Mix short punchy lines with slightly longer ones.
+- Never start with "I built" or "I made" — open with the domain/workflow context first.
+- No paragraph headers, no bold text, no markdown formatting in the body.
+- No marketing words: powerful, robust, seamless, innovative, excited, thrilled, game-changer, leverage, cutting-edge.
+- The GitHub link goes on its own line. Keep the feedback invite short and natural.
+- Title: "Built a...", "We built a...", "I made a..." — short, describes what it does.
+- Flair: pick from {', '.join(subreddit_info.get('preferred_flairs') or ['Project'])}
 
 Return JSON:
 {{

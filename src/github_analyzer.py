@@ -6,12 +6,13 @@ import time
 from typing import Dict, Optional
 from openai import OpenAI
 
-from .config import OPENAI_API_KEY, GITHUB_TOKEN, GITHUB_API_BASE, OPENAI_MODEL
+from .config import OPENAI_API_KEY, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, GITHUB_TOKEN, GITHUB_API_BASE, OPENAI_MODEL
 from .utils import extract_repo_info, rate_limit
 
 class GitHubAnalyzer:
     def __init__(self):
-        self.client = OpenAI(api_key=OPENAI_API_KEY)
+        api_key = OPENROUTER_API_KEY or OPENAI_API_KEY
+        self.client = OpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
         self.headers = {
             "Accept": "application/vnd.github.v3+json"
         }
@@ -125,7 +126,7 @@ class GitHubAnalyzer:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert at analyzing AI/ML GitHub repositories and extracting key value propositions for marketing purposes."
+                        "content": "You are a developer reading another developer's GitHub repo. Your job is to understand what problem it solves, what pain it targets, and how a real developer would explain it to a colleague — not what a marketer would say about it. Be specific and technical. Avoid hype words."
                     },
                     {
                         "role": "user",
@@ -143,11 +144,12 @@ class GitHubAnalyzer:
                 "top_3_values": [],
                 "build_further_with_neo": "",
                 "synopsis": "",
+                "pain_point": "",
                 "key_features": [],
                 "technical_stack": [],
                 "use_cases": [],
                 "target_audience": "",
-                "innovation_level": ""
+                "what_makes_it_different": ""
             }
 
             # Merge with defaults
@@ -167,7 +169,7 @@ class GitHubAnalyzer:
         languages = ', '.join(repo_data.get('languages') or [])
         topics = ', '.join(repo_data.get('topics') or [])
 
-        return f"""Analyze this GitHub repository for an AI/ML project built with NEO (an autonomous AI/ML tool):
+        return f"""Read this GitHub repository and extract information that would help a developer explain it naturally to other developers.
 
 REPOSITORY: {repo_data.get('name', 'Unknown')}
 DESCRIPTION: {repo_data.get('description', 'No description available')}
@@ -175,29 +177,27 @@ LANGUAGES: {languages}
 TOPICS: {topics}
 
 README CONTENT:
-{repo_data['readme'][:8000]}  # Limit to avoid token limits
+{repo_data['readme'][:8000]}
 
-Extract and provide the following information in JSON format:
+Answer these questions as JSON:
 
 {{
-  "top_3_values": ["Value proposition 1", "Value proposition 2", "Value proposition 3"],
-  "build_further_with_neo": "Explain how developers can extend or build upon this project using NEO",
-  "synopsis": "2-3 sentence technical synopsis of what this project does",
-  "key_features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
+  "top_3_values": ["Specific thing 1 this does that others don't", "Specific thing 2", "Specific thing 3"],
+  "build_further_with_neo": "How developers could extend this project further",
+  "synopsis": "2-3 sentences explaining what it does and what problem it solves — written like a developer explaining it to a colleague",
+  "pain_point": "The specific frustration or gap this tool addresses — what was broken or missing before it existed",
+  "key_features": ["Concrete action/capability 1", "Concrete action/capability 2", "Concrete action/capability 3"],
   "technical_stack": ["Tech 1", "Tech 2", "Tech 3"],
-  "use_cases": ["Use case 1", "Use case 2", "Use case 3"],
-  "target_audience": "Who would benefit most from this project",
-  "innovation_level": "What makes this unique or innovative"
+  "use_cases": ["Specific scenario where this is useful 1", "Specific scenario 2", "Specific scenario 3"],
+  "target_audience": "What kind of developer or workflow this is built for",
+  "what_makes_it_different": "One specific technical thing that separates this from the obvious alternative"
 }}
 
-Focus on:
-1. Unique value propositions that differentiate this from similar projects
-2. Practical applications and real-world use cases
-3. Technical sophistication and implementation quality
-4. How NEO as a tool enabled the creation of this project
-5. Opportunities for further development
-
-Ensure all fields are filled with meaningful, specific content based on the README."""
+Rules:
+- key_features must be action verbs describing what the tool does: "Detects X", "Outputs Y", "Runs Z" — not adjectives
+- pain_point should describe what was painful/missing before this tool existed
+- synopsis must not use marketing words like powerful, robust, seamless, innovative
+- all fields must be grounded in what the README actually says, not inferred generically"""
 
     def analyze_repository(self, repo_url: str, force_refresh: bool = False) -> Dict:
         """Complete workflow: fetch data and analyze. Uses DB cache to skip repeat work."""
@@ -212,7 +212,7 @@ Ensure all fields are filled with meaningful, specific content based on the READ
         print(f"Fetching data from {repo_url}...")
         repo_data = self.fetch_repo_data(repo_url)
 
-        print("Analyzing with OpenAI GPT-4...")
+        print(f"Analyzing with {OPENAI_MODEL}...")
         analysis = self.analyze_with_llm(repo_data)
 
         save_analysis_cache(repo_url, analysis)
