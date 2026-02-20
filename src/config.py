@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Keys
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")  # kept for backward compat
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
 REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET", "")
@@ -26,8 +27,9 @@ SUBREDDIT_DB_PATH = DATA_DIR / "subreddit_db.json"
 VIRAL_EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
 GENERATED_POSTS_DIR.mkdir(parents=True, exist_ok=True)
 
-# OpenAI Configuration
-OPENAI_MODEL = "gpt-4-turbo-preview"
+# LLM Configuration (via OpenRouter)
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENAI_MODEL = "minimax/minimax-m2.5"
 OPENAI_TEMPERATURE = 0.7
 OPENAI_MAX_TOKENS = 2000
 
@@ -46,8 +48,8 @@ def validate_config():
     """Validate required configuration"""
     errors = []
 
-    if not OPENAI_API_KEY:
-        errors.append("OPENAI_API_KEY is required")
+    if not OPENROUTER_API_KEY and not OPENAI_API_KEY:
+        errors.append("OPENROUTER_API_KEY is required (get one at openrouter.ai)")
 
     # Database URL check (supports Supabase, Vercel Postgres, or any Postgres)
     db_url = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL') or os.getenv('SUPABASE_DB_URL')
